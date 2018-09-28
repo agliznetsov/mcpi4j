@@ -118,12 +118,17 @@ public class Minecraft {
      */
     public int[] getPlayerEntityIds() {
         send("world.getPlayerIds");
-        String[] strIds = receive().split("|");
-        int[] ids = new int[strIds.length];
-        for (int i = 0; i < ids.length; i++) {
-            ids[i] = Integer.parseInt(strIds[i]);
+        String response = receive();
+        if ("Fail".equals(response)) {
+            return new int[0];
+        } else {
+            String[] strIds = response.split("|");
+            int[] ids = new int[strIds.length];
+            for (int i = 0; i < ids.length; i++) {
+                ids[i] = Integer.parseInt(strIds[i]);
+            }
+            return ids;
         }
-        return ids;
     }
 
     /**
@@ -286,7 +291,9 @@ public class Minecraft {
         if (!connection.autoFlush) {
             throw new IllegalStateException("Methods that return data aren't supported with autoflush off!");
         }
-        return connection.receive();
+        String response = connection.receive();
+        System.out.println("[" + response + "]");
+        return response;
     }
 
     @Override
