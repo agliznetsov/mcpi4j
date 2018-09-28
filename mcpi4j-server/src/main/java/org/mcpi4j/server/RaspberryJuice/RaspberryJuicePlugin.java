@@ -26,7 +26,7 @@ public class RaspberryJuicePlugin extends JavaPlugin implements Listener, Minecr
 			Material.STONE_SWORD, 
 			Material.WOOD_SWORD);
 
-	public ServerListenerThread serverThread;
+	public ServerListener serverThread;
 
 	public List<RaspberryJuiceRemoteSession> sessions;
 
@@ -80,7 +80,7 @@ public class RaspberryJuicePlugin extends JavaPlugin implements Listener, Minecr
         };
 		//create new tcp listener thread
 		try {
-			serverThread = new ServerListenerThread(new InetSocketAddress(port), connectionHandler);
+			serverThread = new ServerListener(new InetSocketAddress(port), connectionHandler);
 			new Thread(serverThread).start();
 			getLogger().info("ThreadListener Started");
 		} catch (Exception e) {

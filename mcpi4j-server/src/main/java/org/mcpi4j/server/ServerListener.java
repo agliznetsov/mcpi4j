@@ -6,12 +6,12 @@ import java.net.Socket;
 import java.net.SocketAddress;
 import java.util.function.Consumer;
 
-public class ServerListenerThread implements Runnable {
+public class ServerListener implements Runnable {
     private ServerSocket serverSocket;
     private boolean running = true;
     private Consumer<Socket> connectionHandler;
 
-    public ServerListenerThread(SocketAddress bindAddress, Consumer<Socket> connectionHandler) throws IOException {
+    public ServerListener(SocketAddress bindAddress, Consumer<Socket> connectionHandler) throws IOException {
         serverSocket = new ServerSocket();
         serverSocket.setReuseAddress(true);
         serverSocket.bind(bindAddress);
