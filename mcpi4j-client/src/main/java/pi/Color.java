@@ -16,4 +16,8 @@ public enum Color {
      * the block DATA for the color
      */
     final int woolColorData = ordinal();
+
+    public static Color fromInt(int x) {
+        return Color.values()[x];
+    }
 }
