@@ -1,17 +1,16 @@
 package org.mcpi4j.server.RaspberryJuice;
 
-import java.net.*;
 import java.util.*;
+import java.util.logging.Logger;
 
 import org.bukkit.*;
 import org.bukkit.entity.*;
 import org.bukkit.block.*;
 import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.event.player.AsyncPlayerChatEvent;
-import org.mcpi4j.server.LocationType;
-import org.mcpi4j.server.RemoteSession;
+import org.mcpi4j.server.MinecraftApi;
 
-public class RaspberryJuiceRemoteSession extends RemoteSession {
+public class RaspberryJuiceApi implements MinecraftApi {
 
 	private final LocationType locationType;
 
@@ -20,16 +19,14 @@ public class RaspberryJuiceRemoteSession extends RemoteSession {
 	public RaspberryJuicePlugin plugin;
 
 	protected ArrayDeque<PlayerInteractEvent> interactEventQueue = new ArrayDeque<PlayerInteractEvent>();
-	
+
 	protected ArrayDeque<AsyncPlayerChatEvent> chatPostedQueue = new ArrayDeque<AsyncPlayerChatEvent>();
 
 	private Player attachedPlayer = null;
 
-	public RaspberryJuiceRemoteSession(RaspberryJuicePlugin plugin, Socket socket) {
-		super(plugin, socket);
+	public RaspberryJuiceApi(RaspberryJuicePlugin plugin) {
 		this.plugin = plugin;
 		this.locationType = plugin.getLocationType();
-		init();
 	}
 
 	public Location getOrigin() {
@@ -64,19 +61,14 @@ public class RaspberryJuiceRemoteSession extends RemoteSession {
 					throw new IllegalArgumentException("Unknown location type " + locationType);
 			}
 		}
-		super.tick();
 	}
 
-	protected void handleLine(String line) {
-		//System.out.println(line);
-		String methodName = line.substring(0, line.indexOf("("));
-		//split string into args, handles , inside " i.e. ","
-		String[] args = line.substring(line.indexOf("(") + 1, line.length() - 1).split(",");
-		//System.out.println(methodName + ":" + Arrays.toString(args));
-		handleCommand(methodName, args);
-	}
+    @Override
+    public Logger getLogger() {
+        return plugin.getLogger();
+    }
 
-	protected void handleCommand(String c, String[] args) {
+    public Object handleCommand(String c, String[] args) {
 
 		try {
 			// get the server
@@ -88,18 +80,18 @@ public class RaspberryJuiceRemoteSession extends RemoteSession {
 			// world.getBlock
 			if (c.equals("world.getBlock")) {
 				Location loc = parseRelativeBlockLocation(args[0], args[1], args[2]);
-				send(world.getBlockTypeIdAt(loc));
+				return world.getBlockTypeIdAt(loc);
 
 			// world.getBlocks
 			} else if (c.equals("world.getBlocks")) {
 				Location loc1 = parseRelativeBlockLocation(args[0], args[1], args[2]);
 				Location loc2 = parseRelativeBlockLocation(args[3], args[4], args[5]);
-				send(getBlocks(loc1, loc2));
+				return getBlocks(loc1, loc2);
 
 			// world.getBlockWithData
 			} else if (c.equals("world.getBlockWithData")) {
 				Location loc = parseRelativeBlockLocation(args[0], args[1], args[2]);
-				send(world.getBlockTypeIdAt(loc) + "," + world.getBlockAt(loc).getData());
+				return world.getBlockTypeIdAt(loc) + "," + world.getBlockAt(loc).getData();
 
 			// world.setBlock
 			} else if (c.equals("world.setBlock")) {
@@ -124,19 +116,19 @@ public class RaspberryJuiceRemoteSession extends RemoteSession {
 						bdr.append("|");
 					}
 					bdr.deleteCharAt(bdr.length()-1);
-					send(bdr.toString());
+					return bdr.toString();
 				} else {
-					send("Fail");
+					return "Fail";
 				}
 
 			// world.getPlayerId
 			} else if (c.equals("world.getPlayerId")) {
 				Player p = plugin.getNamedPlayer(args[0]);
 				if (p != null) {
-					send(p.getEntityId());
+					return p.getEntityId();
 				} else {
 					plugin.getLogger().info("Player [" + args[0] + "] not found.");
-					send("Fail");
+					return "Fail";
 				}
 			// entity.getListName
 			} else if (c.equals("entity.getName")) {
@@ -146,9 +138,9 @@ public class RaspberryJuiceRemoteSession extends RemoteSession {
 				} else if (e instanceof Player) {
 					Player p = (Player) e;
 					//sending list name because plugin.getNamedPlayer() uses list name
-					send(p.getPlayerListName());
+					return p.getPlayerListName();
 				} else if (e != null) {
-					send(e.getName());
+					return e.getName();
 				}
 
 			// chat.post
@@ -183,7 +175,7 @@ public class RaspberryJuiceRemoteSession extends RemoteSession {
 						b.append("|");
 					}
 				}
-				send(b.toString());
+				return b.toString();
 
 			// events.chat.posts
 			} else if (c.equals("events.chat.posts")) {
@@ -197,12 +189,12 @@ public class RaspberryJuiceRemoteSession extends RemoteSession {
 						b.append("|");
 					}
 				}
-				send(b.toString());
+				return b.toString();
 
 			// player.getTile
 			} else if (c.equals("player.getTile")) {
 				Player currentPlayer = getCurrentPlayer();
-				send(blockLocationToRelative(currentPlayer.getLocation()));
+				return blockLocationToRelative(currentPlayer.getLocation());
 
 			// player.setTile
 			} else if (c.equals("player.setTile")) {
@@ -215,7 +207,7 @@ public class RaspberryJuiceRemoteSession extends RemoteSession {
 			// player.getAbsPos
 			} else if (c.equals("player.getAbsPos")) {
 				Player currentPlayer = getCurrentPlayer();
-				send(currentPlayer.getLocation());
+				return currentPlayer.getLocation();
 
 			// player.setAbsPos
 			} else if (c.equals("player.setAbsPos")) {
@@ -231,7 +223,7 @@ public class RaspberryJuiceRemoteSession extends RemoteSession {
 			// player.getPos
 			} else if (c.equals("player.getPos")) {
 				Player currentPlayer = getCurrentPlayer();
-				send(locationToRelative(currentPlayer.getLocation()));
+				return locationToRelative(currentPlayer.getLocation());
 
 			// player.setPos
 			} else if (c.equals("player.setPos")) {
@@ -254,7 +246,7 @@ public class RaspberryJuiceRemoteSession extends RemoteSession {
 			// player.getDirection
 			} else if (c.equals("player.getDirection")) {
 			Player currentPlayer = getCurrentPlayer();
-			send(currentPlayer.getLocation().getDirection().toString());
+			return currentPlayer.getLocation().getDirection().toString();
 
 			// player.setRotation
 			} else if (c.equals("player.setRotation")) {
@@ -270,7 +262,7 @@ public class RaspberryJuiceRemoteSession extends RemoteSession {
 				float yaw = currentPlayer.getLocation().getYaw();
 				// turn bukkit's 0 - -360 to positive numbers
 				if (yaw < 0) yaw = yaw * -1;
-				send(yaw);
+				return yaw;
 
 			// player.setPitch
 			} else if (c.equals("player.setPitch")) {
@@ -283,21 +275,21 @@ public class RaspberryJuiceRemoteSession extends RemoteSession {
 			// player.getPitch
 			} else if (c.equals("player.getPitch")) {
 				Player currentPlayer = getCurrentPlayer();
-				send(currentPlayer.getLocation().getPitch());
+				return currentPlayer.getLocation().getPitch();
 
 				// world.getHeight
 			} else if (c.equals("world.getHeight")) {
-				send(world.getHighestBlockYAt(parseRelativeBlockLocation(args[0], "0", args[1])) - origin.getBlockY());
+				return world.getHighestBlockYAt(parseRelativeBlockLocation(args[0], "0", args[1])) - origin.getBlockY();
 
 			// entity.getTile
 			} else if (c.equals("entity.getTile")) {
 				//get entity based on id
 				Entity entity = plugin.getEntity(Integer.parseInt(args[0]));
 				if (entity != null) {
-					send(blockLocationToRelative(entity.getLocation()));
+					return blockLocationToRelative(entity.getLocation());
 				} else {
 					plugin.getLogger().info("Entity [" + args[0] + "] not found.");
-					send("Fail");
+					return "Fail";
 				}
 
 			// entity.setTile
@@ -311,7 +303,7 @@ public class RaspberryJuiceRemoteSession extends RemoteSession {
 					entity.teleport(parseRelativeBlockLocation(x, y, z, loc.getPitch(), loc.getYaw()));
 				} else {
 					plugin.getLogger().info("Entity [" + args[0] + "] not found.");
-					send("Fail");
+					return "Fail";
 				}
 
 			// entity.getPos
@@ -320,10 +312,10 @@ public class RaspberryJuiceRemoteSession extends RemoteSession {
 				Entity entity = plugin.getEntity(Integer.parseInt(args[0]));
 				//Player entity = plugin.getEntity(Integer.parseInt(args[0]));
 				if (entity != null) {
-					send(locationToRelative(entity.getLocation()));
+					return locationToRelative(entity.getLocation());
 				} else {
 					plugin.getLogger().info("Entity [" + args[0] + "] not found.");
-					send("Fail");
+					return "Fail";
 				}
 
 			// entity.setPos
@@ -337,7 +329,7 @@ public class RaspberryJuiceRemoteSession extends RemoteSession {
 					entity.teleport(parseRelativeLocation(x, y, z, loc.getPitch(), loc.getYaw()));
 				} else {
 					plugin.getLogger().info("Entity [" + args[0] + "] not found.");
-					send("Fail");
+					return "Fail";
 				}
 
 			// entity.setDirection
@@ -359,10 +351,10 @@ public class RaspberryJuiceRemoteSession extends RemoteSession {
 				//get entity based on id
 				Entity entity = plugin.getEntity(Integer.parseInt(args[0]));
 				if (entity != null) {
-					send(entity.getLocation().getDirection().toString());
+					return entity.getLocation().getDirection().toString();
 				} else {
 					plugin.getLogger().info("Entity [" + args[0] + "] not found.");
-					send("Fail");
+					return "Fail";
 				}
 
 			// entity.setRotation
@@ -382,10 +374,10 @@ public class RaspberryJuiceRemoteSession extends RemoteSession {
 				//get entity based on id
 				Entity entity = plugin.getEntity(Integer.parseInt(args[0]));
 				if (entity != null) {
-					send(entity.getLocation().getYaw());
+					return entity.getLocation().getYaw();
 				} else {
 					plugin.getLogger().info("Entity [" + args[0] + "] not found.");
-					send("Fail");
+					return "Fail";
 				}
 
 			// entity.setPitch
@@ -405,10 +397,10 @@ public class RaspberryJuiceRemoteSession extends RemoteSession {
 				//get entity based on id
 				Entity entity = plugin.getEntity(Integer.parseInt(args[0]));
 				if (entity != null) {
-					send(entity.getLocation().getPitch());
+					return entity.getLocation().getPitch();
 				} else {
 					plugin.getLogger().info("Entity [" + args[0] + "] not found.");
-					send("Fail");
+					return "Fail";
 				}
 
 			// world.setSign
@@ -436,7 +428,7 @@ public class RaspberryJuiceRemoteSession extends RemoteSession {
 			} else if (c.equals("world.spawnEntity")) {
 				Location loc = parseRelativeBlockLocation(args[0], args[1], args[2]);
 				Entity entity = world.spawnEntity(loc, EntityType.fromId(Integer.parseInt(args[3])));
-				send(entity.getEntityId());
+				return entity.getEntityId();
 
 			// world.getEntityTypes
 			} else if (c.equals("world.getEntityTypes")) {
@@ -449,20 +441,19 @@ public class RaspberryJuiceRemoteSession extends RemoteSession {
 						bdr.append("|");
 					}
 				}
-				send(bdr.toString());
+				return bdr.toString();
 
 			// not a command which is supported
 			} else {
 				plugin.getLogger().warning(c + " is not supported.");
-				send("Fail");
+				return "Fail";
 			}
 		} catch (Exception e) {
-
 			plugin.getLogger().warning("Error occured handling command");
 			e.printStackTrace();
-			send("Fail");
-
+			return "Fail";
 		}
+		return null;
 	}
 
 	// create a cuboid of lots of blocks
@@ -589,17 +580,6 @@ public class RaspberryJuiceRemoteSession extends RemoteSession {
 	private Location parseLocation(World world, int x, int y, int z, int originX, int originY, int originZ) {
 		return new Location(world, originX + x, originY + y, originZ + z);
 	}
-
-
-	public void kick(String reason) {
-		try {
-			out.write(reason);
-			out.flush();
-		} catch (Exception e) {
-		}
-		close();
-	}
-
 
 	/** from CraftBukkit's org.bukkit.craftbukkit.block.CraftBlock.blockFactToNotch */
 	public static int blockFaceToNotch(BlockFace face) {

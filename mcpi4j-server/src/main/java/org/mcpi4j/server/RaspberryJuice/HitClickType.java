@@ -1,4 +1,4 @@
-package org.mcpi4j.server;
+package org.mcpi4j.server.RaspberryJuice;
 
 /**
  * Config option to determine whether hit events are triggered by LEFT clicks, RIGHT clicks (like the Pi) or BOTH
