@@ -54,7 +54,7 @@ public class McpiSession {
         server.getApi().getLogger().fine(line);
         String methodName = line.substring(0, line.indexOf("("));
         String[] args = line.substring(line.indexOf("(") + 1, line.length() - 1).split(",");
-        String response = server.getApi().handleCommand(methodName, args);
+        Object response = server.getApi().handleCommand(methodName, args);
         if (response != null) {
             send(response);
         }
