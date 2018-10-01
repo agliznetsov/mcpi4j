@@ -46,7 +46,7 @@ public class McpiSession {
             } catch (IOException e) {
             }
             server.closeSession(id);
-            server.getApi().getLogger().info("Sesssion closed ID: " + id);
+            server.getApi().getLogger().info("Session closed ID: " + id);
         }
     }
 
@@ -75,6 +75,9 @@ public class McpiSession {
                     String newLine = in.readLine();
                     if (newLine != null) {
                         handleLine(newLine);
+                    } else {
+                        close();
+                        return;
                     }
                 }
             }
@@ -93,11 +96,9 @@ public class McpiSession {
             try (BufferedWriter out = new BufferedWriter(new OutputStreamWriter(socket.getOutputStream()))) {
                 while (running) {
                     String line = outQueue.take();
-                    if (line != null) {
-                        out.write(line);
-                        out.write('\n');
-                        out.flush();
-                    }
+                    out.write(line);
+                    out.write('\n');
+                    out.flush();
                 }
             }
         } catch (Exception e) {
