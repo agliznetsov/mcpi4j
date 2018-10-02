@@ -1,13 +1,15 @@
 package org.mcpi4j.server;
 
+import org.apache.log4j.Logger;
+
 import java.io.*;
 import java.net.Socket;
-import java.util.UUID;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingDeque;
 import java.util.concurrent.atomic.AtomicLong;
 
 public class McpiSession {
+    private static final org.apache.log4j.Logger log = Logger.getLogger(McpiSession.class);
 
     private static final AtomicLong COUNTER = new AtomicLong(0);
 
@@ -46,12 +48,12 @@ public class McpiSession {
             } catch (IOException e) {
             }
             server.closeSession(id);
-            server.getApi().getLogger().info("Session closed ID: " + id);
+            log.info("Session closed ID: " + id);
         }
     }
 
     private void handleLine(String line) {
-        server.getApi().getLogger().fine(line);
+        log.info(line);
         String methodName = line.substring(0, line.indexOf("("));
         String[] args = line.substring(line.indexOf("(") + 1, line.length() - 1).split(",");
         Object response = server.getApi().handleCommand(methodName, args);
@@ -68,7 +70,7 @@ public class McpiSession {
     }
 
     private void readInput() {
-        server.getApi().getLogger().info("Starting input thread");
+        log.info("Starting input thread");
         try {
             try (BufferedReader in = new BufferedReader(new InputStreamReader(socket.getInputStream()))) {
                 while (running) {
@@ -91,7 +93,7 @@ public class McpiSession {
     }
 
     private void writeOutput() {
-        server.getApi().getLogger().info("Starting output thread");
+        log.info("Starting output thread");
         try {
             try (BufferedWriter out = new BufferedWriter(new OutputStreamWriter(socket.getOutputStream()))) {
                 while (running) {

@@ -1,14 +1,13 @@
 package org.mcpi4j.server.RaspberryJuice;
 
 import java.util.*;
-import java.util.logging.Logger;
 
 import org.bukkit.*;
 import org.bukkit.entity.*;
 import org.bukkit.block.*;
 import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.event.player.AsyncPlayerChatEvent;
-import org.mcpi4j.server.MinecraftApi;
+import org.mcpi4j.server.api.MinecraftApi;
 
 public class RaspberryJuiceApi implements MinecraftApi {
 
@@ -62,11 +61,6 @@ public class RaspberryJuiceApi implements MinecraftApi {
 			}
 		}
 	}
-
-    @Override
-    public Logger getLogger() {
-        return plugin.getLogger();
-    }
 
     public Object handleCommand(String c, String[] args) {
 

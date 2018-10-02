@@ -1,5 +1,8 @@
 package org.mcpi4j.server;
 
+import org.apache.log4j.Logger;
+import org.mcpi4j.server.api.MinecraftApi;
+
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.net.ServerSocket;
@@ -7,6 +10,7 @@ import java.net.Socket;
 import java.util.concurrent.ConcurrentHashMap;
 
 public class McpiServer {
+    private static final Logger log = Logger.getLogger(McpiServer.class);
 
     private MinecraftApi api;
     private ServerSocket serverSocket;
@@ -45,7 +49,7 @@ public class McpiServer {
         }
         Thread thread = new Thread(this::acceptConnections);
         thread.start();
-        api.getLogger().info("Waiting for connections at port: " + port);
+        log.info("Waiting for connections at port: " + port);
     }
 
     private void acceptConnections() {
@@ -69,7 +73,7 @@ public class McpiServer {
     private void createSession(Socket socket) {
         McpiSession session = new McpiSession(this, socket);
         sessions.put(session.getId(), session);
-        api.getLogger().info("New session ID: " + session.getId() + " address: " + socket.getRemoteSocketAddress());
+        log.info("New session ID: " + session.getId() + " address: " + socket.getRemoteSocketAddress());
     }
 
 }
